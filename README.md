@@ -101,7 +101,7 @@ O projeto se baseia em conceitos de:
 
 # Repositório
 
-	Adicionar link do GitHub aqui.
+https://github.com/Lemigro/visionGuide
 
 # Licença
 
