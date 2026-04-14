@@ -1,5 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 
+// Função debounce para limitar a frequência de chamadas
+const debounce = (func: (...args: any[]) => void, delay: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), delay);
+  };
+};
+
 function App() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [isCameraActive, setIsCameraActive] = useState(false)
@@ -53,7 +62,7 @@ function App() {
         console.log('Comando ouvido:', command);
         
         if (command.includes('descreva') || command.includes('o que é isso') || command.includes('onde estou')) {
-          captureFrame();
+          debouncedCaptureFrame();
         } else if (command.includes('ligar automático') || command.includes('ativar automático')) {
           if (!isAutoMode) toggleAutoMode();
         } else if (command.includes('desligar automático') || command.includes('parar automático')) {
@@ -72,6 +81,9 @@ function App() {
       return () => recognition.stop();
     }
   }, [isCameraActive, isAutoMode]);
+
+  // Debounce para a função captureFrame
+  const debouncedCaptureFrame = useCallback(debounce(captureFrame, 500), [captureFrame]);
 
   const captureFrame = async () => {
     if (!videoRef.current || isAnalyzing) return
@@ -128,7 +140,7 @@ function App() {
       setIsAutoMode(true)
       speak('Modo automático ativado. Analisando a cada dez segundos.')
       // Captura inicial
-      captureFrame()
+      debouncedCaptureFrame()
       // Configura intervalo (ex: 10 segundos)
       autoModeInterval.current = setInterval(() => {
         captureFrame()
@@ -178,7 +190,7 @@ function App() {
           autoPlay 
           playsInline 
           className="w-full h-full object-cover cursor-pointer"
-          onClick={captureFrame}
+          onClick={debouncedCaptureFrame}
         />
 
         {isAnalyzing && (
