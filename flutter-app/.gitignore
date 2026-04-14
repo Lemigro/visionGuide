@@ -1,12 +1,52 @@
+# Windows build files (os CMake e C++ gerados)
+flutter-app/windows/flutter/
+flutter-app/windows/runner/*.exe
+flutter-app/windows/runner/*.manifest
+flutter-app/windows/runner/*.rc
+
+# Web build files (os ícones e manifest padrão)
+flutter-app/web/icons/
+flutter-app/web/favicon.png
+flutter-app/web/manifest.json
+
+# Windows system files
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+
+# Logs
+*.log
+*.err
+*.out
+doc/api/
 .dart_tool/
-.packages
-.pub/
-build/
-android/.gradle/
-ios/Pods/
-macos/Flutter/ephemeral/
-linux/flutter/ephemeral/
-windows/flutter/ephemeral/
-.flutter-plugins
-.flutter-plugins-dependencies
-.metadata
+
+# Sensitive files
+.env
+*.env
+.env.*
+upload-keystore.jks
+upload-keystore.p12
+google-services.json
+GoogleService-Info.plist
+
+# Web specific
+node_modules/
+.js_shell/
+.postmessage/
+.web/
+
+
+# JetBrains (IntelliJ / Android Studio)
+.idea/
+*.iml
+*.iws
+.jks
+.keystore
+
+# Visual Studio Code / Cursor
+.vscode/
+.history/
+*.code-workspace
+.cursor/

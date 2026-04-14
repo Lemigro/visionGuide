@@ -35,20 +35,23 @@ class VisionGuideApp extends StatelessWidget {
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(54),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           ),
         ),
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
             minimumSize: const Size.fromHeight(54),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             side: BorderSide(color: Colors.white.withOpacity(0.12)),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0x141F2A3D),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           hintStyle: const TextStyle(color: Color(0xFF8F9AB3)),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(18),
@@ -77,7 +80,8 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
   final List<_ChatMessage> _messages = [
     const _ChatMessage(
       role: _ChatRole.assistant,
-      text: 'Olá. Posso descrever o ambiente, ler textos e ajudar na navegação.',
+      text:
+          'Olá. Posso descrever o ambiente, ler textos e ajudar na navegação.',
     ),
   ];
 
@@ -124,7 +128,8 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
       _messages.add(
         const _ChatMessage(
           role: _ChatRole.assistant,
-          text: 'Resposta simulada da IA no protótipo Flutter. Aqui depois entra o backend real.',
+          text:
+              'Resposta simulada da IA no protótipo Flutter. Aqui depois entra o backend real.',
         ),
       );
       _chatController.clear();
@@ -164,7 +169,8 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
         _messages.add(
           const _ChatMessage(
             role: _ChatRole.assistant,
-            text: 'Recebi a imagem. Posso descrever o ambiente, destacar objetos e sugerir próximos passos.',
+            text:
+                'Recebi a imagem. Posso descrever o ambiente, destacar objetos e sugerir próximos passos.',
           ),
         );
         _index = 2;
@@ -199,10 +205,10 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
         quickActions: _quickActions,
         onOpenCamera: _openCamera,
       ),
-        _CameraTab(
-          key: const ValueKey('camera'),
-          onCaptureAndSend: _captureAndSendToChat,
-        ),
+      _CameraTab(
+        key: const ValueKey('camera'),
+        onCaptureAndSend: _captureAndSendToChat,
+      ),
       _ChatTab(
         key: const ValueKey('chat'),
         messages: _messages,
@@ -234,8 +240,16 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
               children: [
                 _AppHeader(
                   title: 'VisionGuide',
-                  subtitle: 'Flutter mobile preview',
-                  chip: _index == 1 ? 'Câmera' : _index == 2 ? 'IA' : _index == 3 ? 'Galeria' : _index == 4 ? 'Perfil' : 'Nativo',
+                  subtitle: 'Mobile preview',
+                  chip: _index == 1
+                      ? 'Câmera'
+                      : _index == 2
+                          ? 'IA'
+                          : _index == 3
+                              ? 'Galeria'
+                              : _index == 4
+                                  ? 'Perfil'
+                                  : 'TESTE',
                 ),
                 Expanded(
                   child: AnimatedSwitcher(
@@ -253,19 +267,28 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
           selectedIndex: _index,
           onDestinationSelected: (value) => setState(() => _index = value),
           destinations: const [
-            NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Início'),
+            NavigationDestination(
+                icon: Icon(Icons.home_outlined),
+                selectedIcon: Icon(Icons.home_rounded),
+                label: 'Início'),
             NavigationDestination(
               icon: Icon(Icons.center_focus_strong_outlined),
               selectedIcon: Icon(Icons.center_focus_strong_rounded),
               label: 'Câmera',
             ),
-            NavigationDestination(icon: Icon(Icons.chat_bubble_outline), selectedIcon: Icon(Icons.chat_bubble_rounded), label: 'IA'),
+            NavigationDestination(
+                icon: Icon(Icons.chat_bubble_outline),
+                selectedIcon: Icon(Icons.chat_bubble_rounded),
+                label: 'IA'),
             NavigationDestination(
               icon: Icon(Icons.photo_library_outlined),
               selectedIcon: Icon(Icons.photo_library_rounded),
               label: 'Galeria',
             ),
-            NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person_rounded), label: 'Perfil'),
+            NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person_rounded),
+                label: 'Perfil'),
           ],
         ),
       ),
@@ -274,7 +297,8 @@ class _VisionGuideHomeState extends State<VisionGuideHome> {
 }
 
 class _AppHeader extends StatelessWidget {
-  const _AppHeader({required this.title, required this.subtitle, required this.chip});
+  const _AppHeader(
+      {required this.title, required this.subtitle, required this.chip});
 
   final String title;
   final String subtitle;
@@ -300,7 +324,10 @@ class _AppHeader extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: const Color(0xFF9EA9C2)),
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelLarge
+                      ?.copyWith(color: const Color(0xFF9EA9C2)),
                 ),
               ],
             ),
@@ -321,7 +348,8 @@ class _AppHeader extends StatelessWidget {
 }
 
 class _HomeTab extends StatelessWidget {
-  const _HomeTab({super.key, required this.quickActions, required this.onOpenCamera});
+  const _HomeTab(
+      {super.key, required this.quickActions, required this.onOpenCamera});
 
   final List<_QuickAction> quickActions;
   final VoidCallback onOpenCamera;
@@ -344,14 +372,16 @@ class _HomeTab extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 14),
-        _SectionTitle(title: 'Atalhos rápidos', subtitle: 'Ações mais usadas no app'),
+        _SectionTitle(
+            title: 'Atalhos rápidos', subtitle: 'Ações mais usadas no app'),
         const SizedBox(height: 10),
         ...quickActions.map((action) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: _QuickActionCard(action: action),
             )),
         const SizedBox(height: 6),
-        _SectionTitle(title: 'Status da sessão', subtitle: 'Resumo visual do protótipo'),
+        _SectionTitle(
+            title: 'Status da sessão', subtitle: 'Resumo visual do protótipo'),
         const SizedBox(height: 10),
         const _StatusPanel(),
       ],
@@ -377,7 +407,8 @@ class _HeroCard extends StatelessWidget {
           colors: [Color(0xFF17253C), Color(0xFF0F1727), Color(0xFF08111F)],
         ),
         boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 30, offset: Offset(0, 14)),
+          BoxShadow(
+              color: Color(0x33000000), blurRadius: 30, offset: Offset(0, 14)),
         ],
       ),
       child: Column(
@@ -401,7 +432,7 @@ class _HeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           const Text(
-            'Base Flutter com foco em experiência nativa, acessibilidade e navegação rápida.',
+            'Acessibilidade e navegação rápida.',
             style: TextStyle(color: Color(0xFF9EA9C2), height: 1.4),
           ),
           const SizedBox(height: 18),
@@ -430,9 +461,14 @@ class _SectionTitle extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+            Text(title,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 2),
-            Text(subtitle, style: const TextStyle(color: Color(0xFF9EA9C2), fontSize: 12)),
+            Text(subtitle,
+                style: const TextStyle(color: Color(0xFF9EA9C2), fontSize: 12)),
           ],
         ),
         TextButton(onPressed: () {}, child: const Text('Ver tudo')),
@@ -461,7 +497,11 @@ class _StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          Text(value,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Text(label, style: const TextStyle(color: Color(0xFF9EA9C2))),
         ],
@@ -501,9 +541,11 @@ class _QuickActionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(action.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(action.title,
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text(action.subtitle, style: const TextStyle(color: Color(0xFF9EA9C2))),
+                Text(action.subtitle,
+                    style: const TextStyle(color: Color(0xFF9EA9C2))),
               ],
             ),
           ),
@@ -576,9 +618,14 @@ class _CameraTab extends StatelessWidget {
       key: const ValueKey('camera'),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
-        Text('Câmera assistiva', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+        Text('Câmera assistiva',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
-        const Text('Espaço reservado para integração com câmera, OCR e visão computacional.'),
+        const Text(
+            'Espaço reservado para integração com câmera, OCR e visão computacional.'),
         const SizedBox(height: 14),
         Container(
           height: 470,
@@ -591,7 +638,10 @@ class _CameraTab extends StatelessWidget {
             ),
             border: Border.all(color: Colors.white.withOpacity(0.08)),
             boxShadow: const [
-              BoxShadow(color: Color(0x33000000), blurRadius: 30, offset: Offset(0, 16)),
+              BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 30,
+                  offset: Offset(0, 16)),
             ],
           ),
           child: Stack(
@@ -613,7 +663,8 @@ class _CameraTab extends StatelessWidget {
                 child: _MiniBadge(text: 'Preview ao vivo'),
               ),
               const Center(
-                child: Icon(Icons.center_focus_strong_rounded, size: 112, color: Colors.white70),
+                child: Icon(Icons.center_focus_strong_rounded,
+                    size: 112, color: Colors.white70),
               ),
               Positioned(
                 left: 16,
@@ -638,9 +689,17 @@ class _CameraTab extends StatelessWidget {
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: FilledButton.icon(onPressed: () {}, icon: const Icon(Icons.search_rounded), label: const Text('Analisar agora'))),
+            Expanded(
+                child: FilledButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.search_rounded),
+                    label: const Text('Analisar agora'))),
             const SizedBox(width: 10),
-            Expanded(child: OutlinedButton.icon(onPressed: () {}, icon: const Icon(Icons.autorenew_rounded), label: const Text('Modo contínuo'))),
+            Expanded(
+                child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(Icons.autorenew_rounded),
+                    label: const Text('Modo contínuo'))),
           ],
         ),
         const SizedBox(height: 10),
@@ -694,9 +753,14 @@ class _ChatTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Chat com IA', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+          Text('Chat com IA',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
-          const Text('Conversa rápida para pedir descrição, orientação e ajuda.'),
+          const Text(
+              'Conversa rápida para pedir descrição, orientação e ajuda.'),
           const SizedBox(height: 14),
           Expanded(
             child: ListView.separated(
@@ -707,12 +771,15 @@ class _ChatTab extends StatelessWidget {
                 final message = messages[index];
                 final isUser = message.role == _ChatRole.user;
                 return Align(
-                  alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment:
+                      isUser ? Alignment.centerRight : Alignment.centerLeft,
                   child: Container(
                     constraints: const BoxConstraints(maxWidth: 330),
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: isUser ? const Color(0x2663A7FF) : const Color(0x141F2A3D),
+                      color: isUser
+                          ? const Color(0x2663A7FF)
+                          : const Color(0x141F2A3D),
                       borderRadius: BorderRadius.circular(18),
                       border: Border.all(color: Colors.white.withOpacity(0.08)),
                     ),
@@ -735,7 +802,10 @@ class _ChatTab extends StatelessWidget {
                       ],
                     ),
                   ),
-                ).animate().fadeIn(duration: 220.ms, delay: (index * 26).ms).slideY(begin: 0.05, end: 0);
+                )
+                    .animate()
+                    .fadeIn(duration: 220.ms, delay: (index * 26).ms)
+                    .slideY(begin: 0.05, end: 0);
               },
             ),
           ),
@@ -774,7 +844,11 @@ class _GalleryTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Galeria', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+          Text('Galeria',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           const Text('Linha de mídia recente para o protótipo VisionGuide.'),
           const SizedBox(height: 14),
@@ -796,19 +870,28 @@ class _GalleryTab extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [item.tint.withOpacity(0.98), const Color(0xFF101B2F)],
+                      colors: [
+                        item.tint.withOpacity(0.98),
+                        const Color(0xFF101B2F)
+                      ],
                     ),
                     boxShadow: const [
-                      BoxShadow(color: Color(0x22000000), blurRadius: 18, offset: Offset(0, 10)),
+                      BoxShadow(
+                          color: Color(0x22000000),
+                          blurRadius: 18,
+                          offset: Offset(0, 10)),
                     ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Text(item.kind, style: const TextStyle(color: Colors.white70)),
+                      Text(item.kind,
+                          style: const TextStyle(color: Colors.white70)),
                       const SizedBox(height: 6),
-                      Text(item.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                      Text(item.title,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.w800)),
                     ],
                   ),
                 );
@@ -869,14 +952,17 @@ class _ProfileHeader extends StatelessWidget {
               color: const Color(0x1A63A7FF),
               border: Border.all(color: const Color(0x3363A7FF)),
             ),
-            child: const Icon(Icons.person_rounded, size: 34, color: Colors.white),
+            child:
+                const Icon(Icons.person_rounded, size: 34, color: Colors.white),
           ),
           const SizedBox(width: 14),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Perfil', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                Text('Perfil',
+                    style:
+                        TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                 SizedBox(height: 4),
                 Text(
                   'Preferências de voz, alertas e resposta rápida.',
@@ -918,7 +1004,8 @@ class _SettingRow extends StatelessWidget {
 }
 
 class _QuickAction {
-  const _QuickAction({required this.title, required this.subtitle, required this.icon});
+  const _QuickAction(
+      {required this.title, required this.subtitle, required this.icon});
 
   final String title;
   final String subtitle;
@@ -926,7 +1013,8 @@ class _QuickAction {
 }
 
 class _GalleryItem {
-  const _GalleryItem({required this.title, required this.kind, required this.tint});
+  const _GalleryItem(
+      {required this.title, required this.kind, required this.tint});
 
   final String title;
   final String kind;
