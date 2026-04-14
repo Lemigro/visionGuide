@@ -1,0 +1,46 @@
+# --- JAVA & MAVEN ---
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# --- ANDROID & MOBILE ---
+.gradle/
+build/
+captures/
+*.apk
+*.aar
+local.properties
+.externalNativeBuild/
+.cxx/
+*.keystore
+!debug.keystore
+
+# --- NODE / JAVASCRIPT (Caso use no VisionGuide) ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+backend/node_modules/
+frontend/node_modules/
+dist/
+.env
+
+# --- IDEs (IntelliJ, VSCode, Eclipse) ---
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+bin/
+gen/
+
+# --- SISTEMA OPERACIONAL ---
+Thumbs.db
+desktop.ini
+.DS_Store
