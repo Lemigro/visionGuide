@@ -31,7 +31,23 @@ Desenvolver um sistema acessível e inteligente capaz de:
 
 # Tecnologias Utilizadas 
 	
-	Adicionar tecnologias aqui.
+Backend:
+- Python
+- FastAPI
+- OpenCV
+- YOLO / Haar Cascade
+
+Frontend:
+- React
+- TypeScript
+- Vite
+
+Mobile:
+- Flutter
+- Dart
+
+Outros:
+- WebSocket / REST API
 
 
 # Funcionamento do Sistema
