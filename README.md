@@ -62,12 +62,19 @@ Outros:
 
 # Arquitetura do Sistema 
 
-Entrada: câmera do dispositivo 
-Processamento: modelo de visão computacional 
-Decisão: IA interpreta o ambiente 
-Saída: 
-  - Áudio (principal)
-  - Interface Visual (opcional)
+Arquitetura:
+
+Cliente (Flutter)
+↓
+API REST (Backend - FastAPI)
+↓
+Módulo de Visão Computacional (OpenCV / YOLO)
+↓
+Módulo de IA (interpretação)
+↓
+Resposta (JSON)
+↓
+App (converte em áudio com TTS)
 
 # Metodologia
 	
