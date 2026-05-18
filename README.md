@@ -1,8 +1,3 @@
-
-Yago Barbosa <yagobarbosaoliveira@gmail.com>
-10:31 (há 0 minuto)
-para mim
-
 # VisonGuide
 Sistema inteligente de navegação assistiva para pessoas com deficiência visual.
 
