@@ -2,28 +2,20 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from 'openai';
 import { WebSocketServer, WebSocket } from 'ws';
-from fastapi import FastAPI, HTTPException, status;
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Configuração do provedor de IA (Gemini ou OpenAI)
-const AI_PROVIDER = process.env.AI_PROVIDER || 'gemini'; // 'gemini' ou 'openai'
+const AI_PROVIDER = process.env.AI_PROVIDER;
 
-// Configuração do Gemini
-const genAI = AI_PROVIDER === 'gemini' ? new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '') : null;
-
-// Configuração do OpenAI
 const openai = AI_PROVIDER === 'openai' ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || ''
 }) : null;
 
-const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY);
 const hasOpenAIKey = Boolean(process.env.OPENAI_API_KEY);
 
 type ChatRole = 'user' | 'assistant' | 'system';
@@ -68,14 +60,6 @@ const generateChatReply = async (content: string): Promise<string> => {
     return response.choices[0]?.message?.content || 'Não consegui gerar resposta agora.';
   }
 
-  if (AI_PROVIDER === 'gemini' && genAI && hasGeminiKey) {
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    const prompt = `Você é um assistente acessível do VisionGuide. Responda em português do Brasil, de forma objetiva e útil.\n\nPergunta do usuário: ${content}`;
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text() || 'Não consegui gerar resposta agora.';
-  }
-
   return buildFallbackReply(content);
 };
 
@@ -92,21 +76,19 @@ app.get('/health', (req, res) => {
 
 app.post('/analyze', async (req, res) => {
   try {
-    const { image } = req.body; // base64 image data
+    const { image } = req.body;
 
     if (!image) {
       return res.status(400).json({ error: 'Nenhuma imagem fornecida' });
     }
 
-    // Remover o prefixo data:image/jpeg;base64, se existir
     const base64Data = image.replace(/^data:image\/\w+;base64,/, "");
     
     let description = '';
 
     if (AI_PROVIDER === 'openai' && openai) {
-      // Usar OpenAI GPT-4 Vision
       const response = await openai.chat.completions.create({
-        model: "gpt-4-vision-preview",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "user",
@@ -127,25 +109,7 @@ app.post('/analyze', async (req, res) => {
         max_tokens: 300
       });
 
-      description = response.choices[0].message.content || 'Nenhuma descrição gerada';
-    } else if (AI_PROVIDER === 'gemini' && genAI) {
-      // Usar Google Gemini
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-      const prompt = "Você é o 'Olho Digital' de uma pessoa com deficiência visual. Descreva o que está nesta imagem de forma concisa, direta e útil para alguém que não pode ver. Foque em objetos principais, pessoas, textos visíveis e possíveis obstáculos ou perigos. Responda em Português do Brasil.";
-
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: base64Data,
-            mimeType: "image/jpeg"
-          }
-        }
-      ]);
-
-      const response = await result.response;
-      description = response.text();
+      description = response.choices[0]?.message?.content ?? 'Nenhuma descrição gerada';
     } else {
       return res.status(500).json({ error: 'Nenhum provedor de IA configurado corretamente' });
     }
