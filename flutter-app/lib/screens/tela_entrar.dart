@@ -3,16 +3,17 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../widgets/campo_texto_customizado.dart';
 import '../widgets/botao_primario.dart';
-import '../services/gerenciador_autenticacao.dart';
+import '../viewmodels/autenticacao_view_model.dart';
+import '../widgets/logo_vision_guide.dart';
 
 class TelaEntrar extends StatefulWidget {
   const TelaEntrar({super.key});
 
   @override
-  State<TelaEntrar> createState() => _TelaEntrarState();
+  State<TelaEntrar> createState() => TelaEntrarState();
 }
 
-class _TelaEntrarState extends State<TelaEntrar> {
+class TelaEntrarState extends State<TelaEntrar> {
   final _formularioChave = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
@@ -28,7 +29,7 @@ class _TelaEntrarState extends State<TelaEntrar> {
     if (!_formularioChave.currentState!.validate()) return;
 
     final gerenciador =
-        Provider.of<GerenciadorAutenticacao>(context, listen: false);
+        Provider.of<AutenticacaoViewModel>(context, listen: false);
 
     final sucesso = await gerenciador.realizarLogin(
       _emailController.text,
@@ -58,30 +59,10 @@ class _TelaEntrarState extends State<TelaEntrar> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 60),
-            SizedBox(
-              width: 80,
-              child: Image.asset(
-                'assets/images/logo.png',
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'VisionGuide',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Fazer login em sua conta',
-              style: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 14,
-              ),
+            const SizedBox(height: 48),
+            const LogoVisionGuide(
+              largura: 160,
+              tagline: 'Fazer login em sua conta',
             ),
             const SizedBox(height: 40),
 
@@ -126,7 +107,7 @@ class _TelaEntrarState extends State<TelaEntrar> {
               ),
             ),
             const SizedBox(height: 24),
-            Consumer<GerenciadorAutenticacao>(
+            Consumer<AutenticacaoViewModel>(
               builder: (context, gerenciador, _) {
                 return BotaoPrimario(
                   texto: 'Entrar',

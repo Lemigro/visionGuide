@@ -41,6 +41,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>O VisionGuide usa o microfone para você enviar perguntas por voz ao assistente visual.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>O VisionGuide converte sua fala em texto para conversar com o assistente visual.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>

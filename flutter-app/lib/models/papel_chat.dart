@@ -1,0 +1,4 @@
+enum PapelChat {
+  usuario,
+  assistente,
+}

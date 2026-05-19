@@ -37,13 +37,8 @@ Backend:
 - OpenCV
 - YOLO / Haar Cascade
 
-Frontend:
-- React
-- TypeScript
-- Vite
-
-Mobile:
-- Flutter
+Cliente:
+- Flutter (mobile e web)
 - Dart
 
 Outros:

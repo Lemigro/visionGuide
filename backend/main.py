@@ -1,193 +1,41 @@
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from rotas_autenticacao import monta_rotas_autenticacao
-import base64
-import os
-import sys
 
-current_dir = os.getcwd()
-os.environ['ULTRALYTICS_CONFIG_DIR'] = os.path.join(current_dir, '.ultralytics', 'config')
-os.environ['ULTRALYTICS_SETTINGS_DIR'] = os.path.join(current_dir, '.ultralytics', 'settings')
-os.environ['YOLO_CONFIG_DIR'] = os.path.join(current_dir, '.ultralytics', 'config')
-
-os.makedirs(os.environ['ULTRALYTICS_CONFIG_DIR'], exist_ok=True)
-os.makedirs(os.environ['ULTRALYTICS_SETTINGS_DIR'], exist_ok=True)
-
-import io
-import cv2
-import numpy as np
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import google.generativeai as genai
-from dotenv import load_dotenv
-from PIL import Image
-from ultralytics import YOLO
+from core.visao_modelos import carregar_modelos_visao
+from dependencies import autenticacao_servico
+from routers import (
+    router_autenticacao,
+    router_chat,
+    router_saude,
+    router_visao,
+)
 
 load_dotenv(override=True)
+
+carregar_modelos_visao()
+autenticacao_servico.inicializar()
 
 app = FastAPI(title="VisionGuide API")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    print("ERRO: GEMINI_API_KEY não encontrada no arquivo .env")
-else:
-    print(f"API Key carregada: {GEMINI_API_KEY[:4]}****")
-    genai.configure(api_key=GEMINI_API_KEY)
-
-try:
-    yolo_model = YOLO('yolov8n.pt') 
-    print("YOLOv8 carregado com sucesso!")
-except Exception as e:
-    print(f"Erro ao carregar YOLOv8: {e}")
-    yolo_model = None
-
-try:
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    print("Detector de rostos carregado com sucesso!")
-except Exception as e:
-    print(f"Erro ao carregar detector de rostos: {e}")
-    face_cascade = None
-
-class ImageRequest(BaseModel):
-    image: str
-
-def process_with_yolo(img):
-    if yolo_model is None:
-        return []
-    
-    results = yolo_model(img, verbose=False)
-    detections = []
-    
-    for r in results:
-        for box in r.boxes:
-            cls = int(box.cls[0])
-            label = yolo_model.names[cls]
-            conf = float(box.conf[0])
-            if conf > 0.4:
-                detections.append({"label": label, "confidence": conf})
-    
-    return detections
-
-@app.get("/health")
-async def health():
-    return {"status": "ok", "provider": "python/fastapi", "yolo": yolo_model is not None}
-
-@app.post("/analyze")
-async def analyze_image(request: ImageRequest):
-    try:
-        header, encoded = request.image.split(",", 1) if "," in request.image else (None, request.image)
-        image_bytes = base64.b64decode(encoded)
-        
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if img is None:
-            raise HTTPException(status_code=400, detail="Imagem inválida")
-
-        yolo_results = process_with_yolo(img)
-        
-        faces_detected = 0
-        if face_cascade is not None:
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
-            faces_detected = len(faces)
-
-        translations = {
-            "person": "pessoa",
-            "bicycle": "bicicleta",
-            "car": "carro",
-            "motorcycle": "moto",
-            "bus": "ônibus",
-            "truck": "caminhão",
-            "traffic light": "semáforo",
-            "stop sign": "placa de pare",
-            "bench": "banco",
-            "dog": "cachorro",
-            "cat": "gato",
-            "backpack": "mochila",
-            "umbrella": "guarda-chuva",
-            "handbag": "bolsa",
-            "tie": "gravata",
-            "suitcase": "mala",
-            "bottle": "garrafa",
-            "cup": "copo",
-            "fork": "garfo",
-            "knife": "faca",
-            "spoon": "colher",
-            "bowl": "tigela",
-            "chair": "cadeira",
-            "couch": "sofá",
-            "potted plant": "planta",
-            "bed": "cama",
-            "dining table": "mesa de jantar",
-            "toilet": "vaso sanitário",
-            "tv": "televisão",
-            "laptop": "laptop",
-            "mouse": "mouse",
-            "remote": "controle remoto",
-            "keyboard": "teclado",
-            "cell phone": "celular",
-            "microwave": "micro-ondas",
-            "oven": "forno",
-            "sink": "pia",
-            "refrigerator": "geladeira",
-            "book": "livro",
-            "clock": "relógio",
-            "vase": "vaso",
-            "scissors": "tesoura",
-            "teddy bear": "urso de pelúcia",
-            "hair drier": "secador de cabelo",
-            "toothbrush": "escova de dentes"
-        }
-
-        yolo_summary = []
-        for det in yolo_results:
-            label_pt = translations.get(det['label'], det['label'])
-            if label_pt not in yolo_summary:
-                yolo_summary.append(label_pt)
-        
-        if faces_detected > 0:
-            face_text = f"{faces_detected} rosto(s)"
-            if face_text not in yolo_summary:
-                yolo_summary.append(face_text)
-
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        fast_vision_context = f" O sistema de detecção rápida identificou: {', '.join(yolo_summary)}." if yolo_summary else ""
-        
-        prompt = (
-            "Você é o 'Olho Digital' de uma pessoa com deficiência visual. "
-            "Descreva o que está nesta imagem de forma concisa, direta e útil. "
-            f"{fast_vision_context} "
-            "Foque em descrever a disposição espacial (ex: 'à sua esquerda', 'no centro'). "
-            "Se houver pessoas, descreva o que estão fazendo. "
-            "Se houver texto, leia-o. "
-            "Responda em Português do Brasil."
-        )
-        
-        img_pil = Image.open(io.BytesIO(image_bytes))
-        response = model.generate_content([prompt, img_pil])
-        
-        final_description = response.text
-        
-        return {
-            "description": final_description,
-            "detections": yolo_results,
-            "summary": yolo_summary
-        }
-        
-    except Exception as e:
-        print(f"Erro ao analisar imagem: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+app.include_router(router_saude, tags=["sistema"])
+app.include_router(router_autenticacao, prefix="/auth", tags=["auth"])
+app.include_router(router_visao, tags=["visao"])
+app.include_router(router_chat, tags=["chat"])
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=3001)
+
+    port = int(os.getenv("PORT", 3001))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -29,6 +29,14 @@ flutter pub get
 flutter run
 ```
 
-## Observação
+## Backend
 
-Este diretório é independente do frontend atual e serve como ponto de partida para evoluir a versão mobile nativa do VisionGuide.
+O app consome a API em `../backend` (FastAPI, porta 3001). Configure `OPENAI_API_KEY` no `.env` do backend para chat e descrição visual completos.
+
+## Web (Chrome)
+
+```bash
+flutter run -d chrome
+```
+
+Para voz no navegador: aba IA → **Testar voz** (uma vez por sessão) → permitir microfone.

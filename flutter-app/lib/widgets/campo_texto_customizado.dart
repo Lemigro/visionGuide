@@ -23,24 +23,24 @@ class CampoTextoCustomizado extends StatefulWidget {
   });
 
   @override
-  State<CampoTextoCustomizado> createState() => _CampoTextoCustomizadoState();
+  State<CampoTextoCustomizado> createState() => CampoTextoCustomizadoState();
 }
 
-class _CampoTextoCustomizadoState extends State<CampoTextoCustomizado> {
-  late bool _mostrarSenha;
+class CampoTextoCustomizadoState extends State<CampoTextoCustomizado> {
+  late bool exibirSenha;
 
   @override
   void initState() {
     super.initState();
-    _mostrarSenha = !widget.esSenha;
+    exibirSenha = !widget.esSenha;
   }
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: widget.controller,
-      obscureText: widget.esSenha && !_mostrarSenha,
-      maxLines: widget.esSenha && !_mostrarSenha ? 1 : widget.linhasMaximas,
+      obscureText: widget.esSenha && !exibirSenha,
+      maxLines: widget.esSenha && !exibirSenha ? 1 : widget.linhasMaximas,
       validator: widget.validador,
       onChanged: widget.aoMudar,
       decoration: InputDecoration(
@@ -50,11 +50,11 @@ class _CampoTextoCustomizadoState extends State<CampoTextoCustomizado> {
         suffixIcon: widget.esSenha
             ? IconButton(
                 icon: Icon(
-                  _mostrarSenha ? Icons.visibility_off : Icons.visibility,
+                  exibirSenha ? Icons.visibility_off : Icons.visibility,
                 ),
                 onPressed: () {
                   setState(() {
-                    _mostrarSenha = !_mostrarSenha;
+                    exibirSenha = !exibirSenha;
                   });
                 },
               )

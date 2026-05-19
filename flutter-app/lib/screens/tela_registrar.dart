@@ -1,121 +1,90 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'dart:async';
 import '../widgets/campo_texto_customizado.dart';
 import '../widgets/botao_primario.dart';
-import '../services/gerenciador_autenticacao.dart';
-import '../services/servico_api.dart';
+import '../viewmodels/autenticacao_view_model.dart';
+import '../viewmodels/registro_view_model.dart';
+import '../widgets/logo_vision_guide.dart';
 
-class TelaRegistrar extends StatefulWidget {
+class TelaRegistrar extends StatelessWidget {
   const TelaRegistrar({super.key});
 
   @override
-  State<TelaRegistrar> createState() => _TelaRegistrarState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => RegistroViewModel(),
+      child: const TelaRegistrarView(),
+    );
+  }
 }
 
-class _TelaRegistrarState extends State<TelaRegistrar> {
-  final _formularioChave = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _codigoOtpController = TextEditingController();
-  final _nomeController = TextEditingController();
-  final _senhaController = TextEditingController();
-  final _confirmacaoSenhaController = TextEditingController();
+class TelaRegistrarView extends StatefulWidget {
+  const TelaRegistrarView({super.key});
 
-  int _segundosRestantes = 0;
-  late Timer _timerOtp;
-  bool _otpEnviado = false;
-  final bool _otpVerificado = false;
-  bool _estaEnviandoOtp = false;
+  @override
+  State<TelaRegistrarView> createState() => TelaRegistrarViewState();
+}
+
+class TelaRegistrarViewState extends State<TelaRegistrarView> {
+  final formularioChave = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final codigoOtpController = TextEditingController();
+  final nomeController = TextEditingController();
+  final senhaController = TextEditingController();
+  final confirmacaoSenhaController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _codigoOtpController.dispose();
-    _nomeController.dispose();
-    _senhaController.dispose();
-    _confirmacaoSenhaController.dispose();
-    _timerOtp.cancel();
+    emailController.dispose();
+    codigoOtpController.dispose();
+    nomeController.dispose();
+    senhaController.dispose();
+    confirmacaoSenhaController.dispose();
     super.dispose();
   }
 
-  Future<void> _enviarOtp() async {
-    if (_emailController.text.isEmpty) {
+  Future<void> enviarOtp() async {
+    final vm = context.read<RegistroViewModel>();
+    final erro = await vm.enviarOtp(emailController.text);
+    if (!mounted) return;
+
+    if (erro != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, insira seu e-mail primeiro'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(erro), backgroundColor: Colors.red),
       );
       return;
     }
 
-    setState(() {
-      _estaEnviandoOtp = true;
-    });
-
-    final resultado = await ServicoApi.enviarOtp(_emailController.text);
-
-    setState(() {
-      _estaEnviandoOtp = false;
-    });
-
-    if (resultado['status'] == true) {
-      setState(() {
-        _otpEnviado = true;
-        _segundosRestantes = 130;
-      });
-
-      _timerOtp = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          _segundosRestantes--;
-        });
-
-        if (_segundosRestantes <= 0) {
-          timer.cancel();
-          setState(() {
-            _otpEnviado = false;
-            _codigoOtpController.clear();
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Código OTP expirou. Solicite um novo.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Código OTP enviado para seu e-mail'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(resultado['mensagem'] ?? 'Erro ao enviar OTP'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Código OTP enviado para seu e-mail'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
-  Future<void> _verificarOtpERegistrar() async {
-    if (!_formularioChave.currentState!.validate()) return;
+  Future<void> verificarOtpERegistrar() async {
+    if (!formularioChave.currentState!.validate()) return;
 
-    if (_codigoOtpController.text.isEmpty) {
+    final registroVm = context.read<RegistroViewModel>();
+    final autenticacaoVm =
+        Provider.of<AutenticacaoViewModel>(context, listen: false);
+
+    final erroOtp = await registroVm.verificarOtp(
+      email: emailController.text,
+      codigo: codigoOtpController.text,
+    );
+
+    if (!mounted) return;
+    if (erroOtp != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor, insira o código OTP'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(erroOtp), backgroundColor: Colors.red),
       );
       return;
     }
 
-    if (_senhaController.text != _confirmacaoSenhaController.text) {
+    if (senhaController.text != confirmacaoSenhaController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('As senhas não coincidem'),
@@ -125,32 +94,12 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
       return;
     }
 
-    final verificacao = await ServicoApi.verificarOtp(
-      email: _emailController.text,
-      codigo: _codigoOtpController.text,
-    );
-
-    if (verificacao['status'] != true) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(verificacao['mensagem'] ?? 'OTP inválido'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (!mounted) return;
-    final gerenciador =
-        Provider.of<GerenciadorAutenticacao>(context, listen: false);
-
-    final sucesso = await gerenciador.registrarUsuario(
-      email: _emailController.text,
-      nome: _nomeController.text,
-      senha: _senhaController.text,
-      confirmacaoSenha: _confirmacaoSenhaController.text,
-      codigoOtp: _codigoOtpController.text,
+    final sucesso = await autenticacaoVm.registrarUsuario(
+      email: emailController.text,
+      nome: nomeController.text,
+      senha: senhaController.text,
+      confirmacaoSenha: confirmacaoSenhaController.text,
+      codigoOtp: codigoOtpController.text,
     );
 
     if (!mounted) return;
@@ -160,21 +109,17 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(gerenciador.mensagemErro ?? 'Erro ao registrar'),
+          content: Text(autenticacaoVm.mensagemErro ?? 'Erro ao registrar'),
           backgroundColor: Colors.red,
         ),
       );
     }
   }
 
-  String _formatarTempo(int segundos) {
-    final minutos = segundos ~/ 60;
-    final segs = segundos % 60;
-    return '$minutos:${segs.toString().padLeft(2, '0')}';
-  }
-
   @override
   Widget build(BuildContext context) {
+    final registroVm = context.watch<RegistroViewModel>();
+
     return Scaffold(
       backgroundColor: const Color(0xFF161342),
       appBar: AppBar(
@@ -189,14 +134,21 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
-          key: _formularioChave,
+          key: formularioChave,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Center(
+                child: LogoVisionGuide(
+                  largura: 130,
+                  tagline: 'Criar sua conta VisionGuide',
+                ),
+              ),
+              const SizedBox(height: 28),
               CampoTextoCustomizado(
                 label: 'E-mail',
                 dica: 'seu@email.com',
-                controller: _emailController,
+                controller: emailController,
                 icone: Icons.email_outlined,
                 validador: (value) {
                   if (value == null || value.isEmpty) {
@@ -216,7 +168,7 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
                     child: CampoTextoCustomizado(
                       label: 'Código de verificação',
                       dica: '000000',
-                      controller: _codigoOtpController,
+                      controller: codigoOtpController,
                       icone: Icons.lock_outline,
                     ),
                   ),
@@ -226,9 +178,10 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         OutlinedButton(
-                          onPressed: _otpEnviado || _estaEnviandoOtp
+                          onPressed: registroVm.otpEnviado ||
+                                  registroVm.estaEnviandoOtp
                               ? null
-                              : _enviarOtp,
+                              : enviarOtp,
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(
                               color: Color(0xFF7C5CFF),
@@ -242,7 +195,7 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
                               horizontal: 8,
                             ),
                           ),
-                          child: _estaEnviandoOtp
+                          child: registroVm.estaEnviandoOtp
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
@@ -250,9 +203,11 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : _otpEnviado
+                              : registroVm.otpEnviado
                                   ? Text(
-                                      _formatarTempo(_segundosRestantes),
+                                      registroVm.formatarTempo(
+                                        registroVm.segundosRestantes,
+                                      ),
                                       style: const TextStyle(
                                         color: Color(0xFF7C5CFF),
                                         fontSize: 12,
@@ -270,7 +225,7 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
               CampoTextoCustomizado(
                 label: 'Nome Utilizador',
                 dica: 'Seu nome completo',
-                controller: _nomeController,
+                controller: nomeController,
                 icone: Icons.person_outline,
                 validador: (value) {
                   if (value == null || value.isEmpty) {
@@ -286,7 +241,7 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
               CampoTextoCustomizado(
                 label: 'Senha',
                 dica: 'Digite uma senha forte',
-                controller: _senhaController,
+                controller: senhaController,
                 esSenha: true,
                 icone: Icons.lock_outlined,
                 validador: (value) {
@@ -303,7 +258,7 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
               CampoTextoCustomizado(
                 label: 'Confirmar senha',
                 dica: 'Confirme sua senha',
-                controller: _confirmacaoSenhaController,
+                controller: confirmacaoSenhaController,
                 esSenha: true,
                 icone: Icons.lock_outlined,
                 validador: (value) {
@@ -314,12 +269,12 @@ class _TelaRegistrarState extends State<TelaRegistrar> {
                 },
               ),
               const SizedBox(height: 32),
-              Consumer<GerenciadorAutenticacao>(
-                builder: (context, gerenciador, _) {
+              Consumer<AutenticacaoViewModel>(
+                builder: (context, autenticacao, _) {
                   return BotaoPrimario(
                     texto: 'Confirmar',
-                    aoClicar: _verificarOtpERegistrar,
-                    estaCarregando: gerenciador.estaCarregando,
+                    aoClicar: verificarOtpERegistrar,
+                    estaCarregando: autenticacao.estaCarregando,
                   );
                 },
               ),
