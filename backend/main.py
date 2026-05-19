@@ -1,4 +1,7 @@
+import asyncio
 import os
+import sys
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -15,10 +18,27 @@ from routers import (
 
 load_dotenv(override=True)
 
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Evita traceback ruidoso no Windows quando o cliente fecha o WebSocket."""
+    if sys.platform == "win32":
+        loop = asyncio.get_running_loop()
+
+        def _tratar_excecao_loop(loop, context):
+            exc = context.get("exception")
+            if isinstance(exc, ConnectionResetError):
+                return
+            loop.default_exception_handler(context)
+
+        loop.set_exception_handler(_tratar_excecao_loop)
+    yield
+
+
 carregar_modelos_visao()
 autenticacao_servico.inicializar()
 
-app = FastAPI(title="VisionGuide API")
+app = FastAPI(title="VisionGuide API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

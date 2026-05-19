@@ -2,12 +2,12 @@
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import '../core/textos_acessibilidade.dart';
 import '../dados/conteudo_inicio.dart';
 import '../viewmodels/acessibilidade_view_model.dart';
 import '../viewmodels/home_view_model.dart';
 import '../widgets/home/aba_camera.dart';
 import '../widgets/home/aba_chat.dart';
-import '../widgets/home/aba_galeria.dart';
 import '../widgets/home/aba_inicio.dart';
 import '../widgets/home/aba_perfil.dart';
 import '../widgets/home/cabecalho_app.dart';
@@ -43,6 +43,10 @@ class VisionGuideHomeViewState extends State<VisionGuideHomeView> {
     super.initState();
     _viewModel = context.read<HomeViewModel>();
     _viewModel.addListener(_aoAtualizarViewModel);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AcessibilidadeViewModel>().anunciarOrientacaoInicial();
+    });
   }
 
   void _aoAtualizarViewModel() {
@@ -50,6 +54,16 @@ class VisionGuideHomeViewState extends State<VisionGuideHomeView> {
     if (!vm.solicitarRolagem) return;
     vm.marcarRolagemConcluida();
     _rolarParaFinal();
+  }
+
+  void _selecionarAba(BuildContext context, int indice) {
+    if (indice < 0 || indice >= TextosAcessibilidade.anunciosAbas.length) {
+      return;
+    }
+    context.read<AcessibilidadeViewModel>().anunciarTelaNaAcaoDoUsuario(
+          TextosAcessibilidade.anunciosAbas[indice],
+        );
+    context.read<HomeViewModel>().definirAba(indice);
   }
 
   void _rolarParaFinal() {
@@ -80,21 +94,13 @@ class VisionGuideHomeViewState extends State<VisionGuideHomeView> {
       AbaInicio(
         key: const ValueKey('home-tab'),
         atalhos: ConteudoInicio.atalhosRapidos,
-        aoAbrirCamera: vm.abrirCamera,
-        aoAbrirChat: vm.abrirChat,
-        aoAbrirGaleria: vm.abrirGaleria,
+        aoAbrirCamera: () => _selecionarAba(context, 1),
+        aoAbrirChat: () => _selecionarAba(context, 2),
+        aoAbrirAjustes: () => _selecionarAba(context, 3),
       ),
       AbaCamera(
         key: const ValueKey('camera'),
         aoCapturarEEnviar: () => _capturarImagem(context),
-        aoAnalisar: () => _capturarImagem(context),
-        aoModoContinuo: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Modo contínuo será ativado na próxima versão.'),
-            ),
-          );
-        },
       ),
       AbaChat(
         key: const ValueKey('chat'),
@@ -115,10 +121,7 @@ class VisionGuideHomeViewState extends State<VisionGuideHomeView> {
         aoLerMensagem: (texto) {
           context.read<AcessibilidadeViewModel>().lerTextoManual(texto);
         },
-      ),
-      AbaGaleria(
-        key: const ValueKey('gallery'),
-        itens: ConteudoInicio.itensGaleria,
+        aoNovaConversa: vm.iniciarNovaConversa,
       ),
       const AbaPerfil(key: ValueKey('profile')),
     ];
@@ -139,10 +142,11 @@ class VisionGuideHomeViewState extends State<VisionGuideHomeView> {
             bottom: false,
             child: Column(
               children: [
-                CabecalhoApp(
-                  subtitulo: 'Visão computacional e realidade aumentada',
-                  etiqueta: vm.etiquetaAba,
-                ),
+                if (vm.indiceAba != 2)
+                  CabecalhoApp(
+                    subtitulo: 'Seu assistente visual por voz',
+                    etiqueta: vm.etiquetaAba,
+                  ),
                 Expanded(
                   child: IndexedStack(
                     index: vm.indiceAba,
@@ -155,37 +159,32 @@ class VisionGuideHomeViewState extends State<VisionGuideHomeView> {
         ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: vm.indiceAba,
-          onDestinationSelected: vm.definirAba,
-          destinations: [
+          onDestinationSelected: (indice) => _selecionarAba(context, indice),
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          destinations: const [
             NavigationDestination(
               icon: Icon(Icons.home_outlined),
               selectedIcon: Icon(Icons.home_rounded),
               label: 'Início',
-              tooltip: 'Início',
+              tooltip: 'Tela inicial com ações principais',
             ),
             NavigationDestination(
               icon: Icon(Icons.center_focus_strong_outlined),
               selectedIcon: Icon(Icons.center_focus_strong_rounded),
-              label: 'Câmera',
-              tooltip: 'Câmera assistiva para descrever ambiente',
+              label: 'Descrever',
+              tooltip: 'Câmera para descrever o ambiente',
             ),
             NavigationDestination(
-              icon: Icon(Icons.chat_bubble_outline),
-              selectedIcon: Icon(Icons.chat_bubble_rounded),
-              label: 'IA',
-              tooltip: 'Assistente visual com voz e chat',
+              icon: Icon(Icons.smart_toy_outlined),
+              selectedIcon: Icon(Icons.smart_toy_rounded),
+              label: 'Assistente',
+              tooltip: 'Assistente de IA com voz e chat',
             ),
             NavigationDestination(
-              icon: Icon(Icons.photo_library_outlined),
-              selectedIcon: Icon(Icons.photo_library_rounded),
-              label: 'Galeria',
-              tooltip: 'Galeria de fotos',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person_rounded),
-              label: 'Perfil',
-              tooltip: 'Perfil e configurações',
+              icon: Icon(Icons.tune_outlined),
+              selectedIcon: Icon(Icons.tune_rounded),
+              label: 'Ajustes',
+              tooltip: 'Acessibilidade e conta',
             ),
           ],
         ),

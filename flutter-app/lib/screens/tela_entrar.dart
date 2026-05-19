@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../core/config_backend.dart';
 import '../widgets/campo_texto_customizado.dart';
 import '../widgets/botao_primario.dart';
 import '../viewmodels/autenticacao_view_model.dart';
@@ -15,8 +16,19 @@ class TelaEntrar extends StatefulWidget {
 
 class TelaEntrarState extends State<TelaEntrar> {
   final _formularioChave = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _senhaController = TextEditingController();
+  final _emailController = TextEditingController(
+    text: 'teste@visionguide.com',
+  );
+  final _senhaController = TextEditingController(text: '123456');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<AutenticacaoViewModel>().verificarServidor();
+    });
+  }
 
   @override
   void dispose() {
@@ -25,13 +37,17 @@ class TelaEntrarState extends State<TelaEntrar> {
     super.dispose();
   }
 
-  void _fazerLogin() async {
+  Future<void> _aposLoginOk(AutenticacaoViewModel auth) async {
+    if (!mounted || !auth.estaAutenticado) return;
+    context.go('/inicio');
+  }
+
+  Future<void> _fazerLogin() async {
     if (!_formularioChave.currentState!.validate()) return;
 
-    final gerenciador =
-        Provider.of<AutenticacaoViewModel>(context, listen: false);
+    final auth = context.read<AutenticacaoViewModel>();
 
-    final sucesso = await gerenciador.realizarLogin(
+    final sucesso = await auth.realizarLogin(
       _emailController.text,
       _senhaController.text,
     );
@@ -39,14 +55,19 @@ class TelaEntrarState extends State<TelaEntrar> {
     if (!mounted) return;
 
     if (sucesso) {
-      context.go('/inicio');
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(gerenciador.mensagemErro ?? 'Erro ao fazer login'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      await _aposLoginOk(auth);
+    }
+  }
+
+  Future<void> _entrarContaTeste() async {
+    final auth = context.read<AutenticacaoViewModel>();
+    _emailController.text = 'teste@visionguide.com';
+    _senhaController.text = '123456';
+
+    final sucesso = await auth.entrarComContaTeste();
+    if (!mounted) return;
+    if (sucesso) {
+      await _aposLoginOk(auth);
     }
   }
 
@@ -65,7 +86,6 @@ class TelaEntrarState extends State<TelaEntrar> {
               tagline: 'Fazer login em sua conta',
             ),
             const SizedBox(height: 40),
-
             Form(
               key: _formularioChave,
               child: Column(
@@ -79,8 +99,7 @@ class TelaEntrarState extends State<TelaEntrar> {
                       if (value == null || value.isEmpty) {
                         return 'Por favor, insira seu e-mail';
                       }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                          .hasMatch(value)) {
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                         return 'E-mail inválido';
                       }
                       return null;
@@ -106,13 +125,91 @@ class TelaEntrarState extends State<TelaEntrar> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Consumer<AutenticacaoViewModel>(
-              builder: (context, gerenciador, _) {
-                return BotaoPrimario(
-                  texto: 'Entrar',
-                  aoClicar: _fazerLogin,
-                  estaCarregando: gerenciador.estaCarregando,
+              builder: (context, auth, _) {
+                final online = auth.servidorOnline;
+                final corServidor = online == true
+                    ? const Color(0xFF7AD089)
+                    : online == false
+                        ? const Color(0xFFE57373)
+                        : const Color(0xFF9EA9C2);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0x141F2A3D),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            online == true
+                                ? 'Servidor online'
+                                : online == false
+                                    ? 'Servidor offline — rode: python main.py'
+                                    : 'Verificando servidor…',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: corServidor, fontSize: 13),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            ConfigBackend.urlAuth,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Color(0xFF9EA9C2),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (auth.mensagemErro != null) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0x33E53935),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          auth.mensagemErro!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Color(0xFFFFCDD2),
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    BotaoPrimario(
+                      texto: 'Entrar',
+                      aoClicar: _fazerLogin,
+                      estaCarregando: auth.estaCarregando,
+                    ),
+                    const SizedBox(height: 10),
+                    OutlinedButton(
+                      onPressed:
+                          auth.estaCarregando ? null : _entrarContaTeste,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      child: const Text('Entrar com conta teste'),
+                    ),
+                    TextButton(
+                      onPressed: auth.estaCarregando
+                          ? null
+                          : () => auth.verificarServidor(),
+                      child: const Text('Testar conexão com servidor'),
+                    ),
+                  ],
                 );
               },
             ),

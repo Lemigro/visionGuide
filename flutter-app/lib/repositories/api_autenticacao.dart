@@ -9,6 +9,17 @@ import '../models/resposta_login_modelo.dart';
 class ApiAutenticacao {
   static String get urlBase => ConfigBackend.urlAuth;
 
+  static Future<bool> verificarServidor() async {
+    try {
+      final response = await http
+          .get(Uri.parse(ConfigBackend.urlHealth))
+          .timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static String extrairMensagemErro(Object? body, int statusCode) {
     if (body is Map<String, dynamic>) {
       final mensagem = body['mensagem'] ?? body['detail'];
@@ -24,15 +35,35 @@ class ApiAutenticacao {
     String email,
     String senha,
   ) async {
+    final emailNormalizado = email.trim().toLowerCase();
+
     try {
       final response = await http.post(
         Uri.parse('$urlBase/login'),
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'senha': senha}),
-      );
+        body: jsonEncode({
+          'email': emailNormalizado,
+          'senha': senha,
+        }),
+      ).timeout(const Duration(seconds: 15));
 
-      final body = jsonDecode(response.body);
-      if (response.statusCode == 200 && body is Map<String, dynamic>) {
+      Map<String, dynamic>? body;
+      if (response.body.isNotEmpty) {
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            body = decoded;
+          }
+        } catch (_) {
+          return RespostaLoginModelo(
+            status: false,
+            mensagem:
+                'Resposta inválida do servidor (HTTP ${response.statusCode}).',
+          );
+        }
+      }
+
+      if (response.statusCode == 200 && body != null) {
         return RespostaLoginModelo.fromJson(body);
       }
 
@@ -44,8 +75,10 @@ class ApiAutenticacao {
       return RespostaLoginModelo(
         status: false,
         mensagem:
-            'Não foi possível conectar ao servidor (${ConfigBackend.urlAuth}). '
-            'Confira se o Python está rodando na porta ${ConfigBackend.porta}. '
+            'Não foi possível conectar em ${ConfigBackend.urlAuth}. '
+            'Confira se o backend está rodando (python main.py na pasta backend, '
+            'porta ${ConfigBackend.porta}). Se abriu o app pelo celular, use o IP '
+            'do computador na rede (ex.: http://192.168.x.x:porta do Flutter). '
             'Detalhe: $e',
       );
     }

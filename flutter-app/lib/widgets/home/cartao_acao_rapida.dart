@@ -9,7 +9,10 @@ class CartaoAcaoRapida extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Semantics(
+      button: true,
+      label: '${acao.titulo}. ${acao.subtitulo}',
+      child: Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -47,6 +50,7 @@ class CartaoAcaoRapida extends StatelessWidget {
           ),
           const Icon(Icons.chevron_right_rounded, color: Color(0xFF9EA9C2)),
         ],
+      ),
       ),
     );
   }

@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:provider/provider.dart';
 
-import 'etiqueta_mini.dart';
+import '../../core/textos_acessibilidade.dart';
+import '../../viewmodels/acessibilidade_view_model.dart';
+import '../acessibilidade/botao_grande.dart';
 
 class AbaCamera extends StatelessWidget {
   const AbaCamera({
     super.key,
     required this.aoCapturarEEnviar,
-    required this.aoAnalisar,
-    required this.aoModoContinuo,
   });
 
   final Future<void> Function() aoCapturarEEnviar;
-  final Future<void> Function() aoAnalisar;
-  final VoidCallback aoModoContinuo;
 
   @override
   Widget build(BuildContext context) {
@@ -21,107 +20,64 @@ class AbaCamera extends StatelessWidget {
       key: const ValueKey('camera'),
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       children: [
-        Text(
-          'Câmera assistiva',
-          style: Theme.of(context)
-              .textTheme
-              .titleLarge
-              ?.copyWith(fontWeight: FontWeight.w800),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Espaço reservado para integração com câmera, OCR e visão computacional.',
-        ),
-        const SizedBox(height: 14),
-        Container(
-          height: 470,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(32),
-            gradient: const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF18253D), Color(0xFF07101D)],
-            ),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x33000000),
-                blurRadius: 30,
-                offset: Offset(0, 16),
-              ),
-            ],
+        Semantics(
+          header: true,
+          child: Text(
+            'Descrever o ambiente',
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800),
           ),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: const Alignment(-0.2, -0.3),
-                      radius: 1,
-                      colors: [const Color(0x3363A7FF), Colors.transparent],
-                    ),
-                  ),
-                ),
-              ),
-              const Positioned(
-                left: 18,
-                top: 18,
-                child: EtiquetaMini(texto: 'Preview ao vivo'),
-              ),
-              const Center(
-                child: Icon(
-                  Icons.center_focus_strong_rounded,
-                  size: 112,
-                  color: Colors.white70,
-                ),
-              ),
-              Positioned(
-                left: 16,
-                right: 16,
-                bottom: 16,
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xC208111F),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.08)),
-                  ),
-                  child: const Text(
-                    'Aponte o celular para um texto, objeto ou obstáculo.\n'
-                    'Aqui entra a câmera real quando a integração estiver pronta.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: FilledButton.icon(
-                onPressed: aoAnalisar,
-                icon: const Icon(Icons.search_rounded),
-                label: const Text('Analisar agora'),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: aoModoContinuo,
-                icon: const Icon(Icons.autorenew_rounded),
-                label: const Text('Modo contínuo'),
-              ),
-            ),
-          ],
         ),
         const SizedBox(height: 10),
-        FilledButton.icon(
-          onPressed: aoCapturarEEnviar,
-          icon: const Icon(Icons.camera_alt_rounded),
-          label: const Text('Capturar e enviar ao chat IA'),
+        const Text(
+          'Aponte o celular para frente. O app tira uma foto, analisa '
+          'e fala em voz alta o que encontrou. A resposta também aparece no assistente.',
+          style: TextStyle(color: Color(0xFF9EA9C2), height: 1.45),
+        ),
+        const SizedBox(height: 24),
+        Semantics(
+          label: 'Área da câmera. Use o botão capturar abaixo.',
+          child: Container(
+            height: 220,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              color: const Color(0xFF141F33),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+            ),
+            child: const Icon(
+              Icons.center_focus_strong_rounded,
+              size: 88,
+              color: Colors.white70,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        BotaoGrande(
+          destaque: true,
+          rotulo: 'Capturar e descrever',
+          descricao: 'Tira foto agora e lê o ambiente em voz alta',
+          icone: Icons.camera_alt_rounded,
+          aoPressionar: () => aoCapturarEEnviar(),
+        ),
+        const SizedBox(height: 12),
+        Semantics(
+          button: true,
+          label: 'Ouvir instrução da câmera',
+          child: OutlinedButton.icon(
+            onPressed: () => context
+                .read<AcessibilidadeViewModel>()
+                .anunciarTelaNaAcaoDoUsuario(
+                  TextosAcessibilidade.anuncioAbaDescrever,
+                ),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(52),
+            ),
+            icon: const Icon(Icons.volume_up_rounded),
+            label: const Text('Ouvir instrução'),
+          ),
         ),
       ],
     ).animate().fadeIn(duration: 280.ms).slideY(begin: 0.03, end: 0);

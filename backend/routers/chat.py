@@ -37,7 +37,15 @@ async def websocket_chat(websocket: WebSocket):
 
     try:
         while True:
-            data = await websocket.receive_text()
+            try:
+                data = await websocket.receive_text()
+            except WebSocketDisconnect:
+                break
+            except RuntimeError as exc:
+                if "disconnect" in str(exc).lower():
+                    break
+                raise
+
             message_data = json.loads(data)
 
             imagem = _extrair_imagem(message_data)
@@ -92,7 +100,9 @@ async def websocket_chat(websocket: WebSocket):
             })
 
     except WebSocketDisconnect:
-        print("Cliente desconectado do chat WebSocket")
+        pass
+    except ConnectionResetError:
+        pass
     except Exception as exc:
         print(f"Erro no WebSocket chat: {exc}")
         try:

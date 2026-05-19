@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/config_backend.dart';
+import '../core/textos_acessibilidade.dart';
 import '../models/mensagem_chat.dart';
 import '../models/papel_chat.dart';
 import '../repositories/repositorio_chat.dart';
@@ -33,12 +34,11 @@ class HomeViewModel extends ChangeNotifier {
   bool aguardandoResposta = false;
   bool solicitarRolagem = false;
   bool _esperandoRespostaAssistente = false;
+  bool _aguardandoLeituraDescricaoImagem = false;
 
   Timer? _timeoutRespostaAssistente;
 
-  final List<MensagemChat> mensagens = [
-    MensagemChat(papel: PapelChat.assistente, texto: _mensagemBoasVindas),
-  ];
+  final List<MensagemChat> mensagens = [];
 
   void inicializar() {
     _repositorioChat.conectar(
@@ -47,6 +47,20 @@ class HomeViewModel extends ChangeNotifier {
       aoErro: (erro) => debugPrint('Erro no WebSocket: $erro'),
       aoFechar: () => debugPrint('WebSocket fechado'),
     );
+  }
+
+  bool _mensagemJaExibida(PapelChat papel, String texto) {
+    final normalizado = texto.trim();
+    if (normalizado.isEmpty) return true;
+
+    final inicio = mensagens.length > 6 ? mensagens.length - 6 : 0;
+    for (var i = mensagens.length - 1; i >= inicio; i--) {
+      final m = mensagens[i];
+      if (m.papel == papel && m.texto.trim() == normalizado) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _processarEventoWebSocket(Map<String, dynamic> evento) {
@@ -71,21 +85,20 @@ class HomeViewModel extends ChangeNotifier {
     final papel =
         papelRaw == 'user' ? PapelChat.usuario : PapelChat.assistente;
 
-    if (papel == PapelChat.assistente && !_esperandoRespostaAssistente) {
-      final duplicataBoasVindas = mensagens.any(
-        (m) =>
-            m.papel == PapelChat.assistente &&
-            m.texto.contains('assistente visual VisionGuide'),
-      );
-      if (duplicataBoasVindas && conteudo.contains('assistente visual VisionGuide')) {
-        return;
-      }
-    }
+    // Perguntas já entram na lista ao enviar; ignorar eco do servidor.
+    if (papel == PapelChat.usuario) return;
+
+    if (_mensagemJaExibida(papel, conteudo)) return;
 
     _finalizarEsperaAssistente();
     mensagens.add(MensagemChat(papel: papel, texto: conteudo));
     if (papel == PapelChat.assistente) {
-      _acessibilidade?.lerTexto(conteudo);
+      if (_aguardandoLeituraDescricaoImagem) {
+        _aguardandoLeituraDescricaoImagem = false;
+        _acessibilidade?.lerTextoManual(conteudo);
+      } else {
+        _acessibilidade?.lerTexto(conteudo);
+      }
     }
     solicitarRolagem = true;
     notifyListeners();
@@ -127,6 +140,9 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   void definirAba(int indice) {
+    if (indice < 0 || indice >= TextosAcessibilidade.anunciosAbas.length) {
+      return;
+    }
     indiceAba = indice;
     if (indice == 2) {
       solicitarRolagem = true;
@@ -136,10 +152,21 @@ class HomeViewModel extends ChangeNotifier {
 
   void abrirCamera() => definirAba(1);
   void abrirChat() => definirAba(2);
-  void abrirGaleria() => definirAba(3);
+  void abrirAjustes() => definirAba(3);
 
   void marcarRolagemConcluida() {
     solicitarRolagem = false;
+  }
+
+  void iniciarNovaConversa() {
+    _finalizarEsperaAssistente();
+    mensagens
+      ..clear()
+      ..add(
+        MensagemChat(papel: PapelChat.assistente, texto: _mensagemBoasVindas),
+      );
+    solicitarRolagem = true;
+    notifyListeners();
   }
 
   String get etiquetaAba {
@@ -147,11 +174,9 @@ class HomeViewModel extends ChangeNotifier {
       case 1:
         return 'Câmera';
       case 2:
-        return 'IA';
+        return 'Assistente';
       case 3:
-        return 'Galeria';
-      case 4:
-        return 'Perfil';
+        return 'Ajustes';
       default:
         return 'Início';
     }
@@ -160,6 +185,11 @@ class HomeViewModel extends ChangeNotifier {
   void enviarMensagem(String texto) {
     final mensagem = texto.trim();
     if (mensagem.isEmpty) return;
+
+    if (_mensagemJaExibida(PapelChat.usuario, mensagem) &&
+        _esperandoRespostaAssistente) {
+      return;
+    }
 
     mensagens.add(MensagemChat(papel: PapelChat.usuario, texto: mensagem));
     _iniciarEsperaAssistente();
@@ -196,6 +226,7 @@ class HomeViewModel extends ChangeNotifier {
         bytesImagem: Uint8List.fromList(bytes),
       ),
     );
+    _aguardandoLeituraDescricaoImagem = true;
     indiceAba = 2;
     _iniciarEsperaAssistente();
     solicitarRolagem = true;
@@ -209,16 +240,21 @@ class HomeViewModel extends ChangeNotifier {
     if (enviado) return null;
 
     _finalizarEsperaAssistente();
+    final erroConexao =
+        'Sem conexão com o servidor. Verifique se o backend Python está em ${ConfigBackend.urlBase}.';
     mensagens.add(
       MensagemChat(
         papel: PapelChat.assistente,
-        texto:
-            'Sem conexão com o servidor. Verifique se o backend Python está em ${ConfigBackend.urlBase}.',
+        texto: erroConexao,
       ),
     );
+    if (_aguardandoLeituraDescricaoImagem) {
+      _aguardandoLeituraDescricaoImagem = false;
+      _acessibilidade?.lerTextoManual(erroConexao);
+    }
     solicitarRolagem = true;
     notifyListeners();
-    return null;
+    return erroConexao;
   }
 
   Future<String?> capturarEAnalisarImagem() async {

@@ -72,7 +72,8 @@ class AutenticacaoServico:
         )
 
     def login(self, dados: DadosLogin) -> RespostaLogin:
-        if self._repo.verificar_bloqueio(dados.email):
+        email = dados.email.strip().lower()
+        if self._repo.verificar_bloqueio(email):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=(
@@ -81,15 +82,15 @@ class AutenticacaoServico:
                 ),
             )
 
-        usuario = self._repo.buscar_usuario(dados.email)
+        usuario = self._repo.buscar_usuario(email)
         if not usuario or usuario["senha"] != self._repo.hash_senha(dados.senha):
-            self._repo.registrar_tentativa_falha(dados.email)
+            self._repo.registrar_tentativa_falha(email)
             return RespostaLogin(
                 status=False,
                 mensagem="E-mail ou senha incorretos",
             )
 
-        self._repo.limpar_tentativas(dados.email)
+        self._repo.limpar_tentativas(email)
         return RespostaLogin(
             status=True,
             mensagem="Login realizado com sucesso",

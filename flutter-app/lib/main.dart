@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'core/rotas.dart';
 import 'viewmodels/acessibilidade_view_model.dart';
@@ -11,27 +12,71 @@ void main() {
         ChangeNotifierProvider(
           create: (_) => AcessibilidadeViewModel()..inicializar(),
         ),
-        ChangeNotifierProvider(create: (_) => AutenticacaoViewModel()),
+        ChangeNotifierProvider(
+          create: (_) => AutenticacaoViewModel()..inicializar(),
+        ),
       ],
-      child: const VisionGuideApp(),
+      child: const _AppComAcessibilidade(),
     ),
   );
 }
 
-class VisionGuideApp extends StatelessWidget {
-  const VisionGuideApp({super.key});
+class _AppComAcessibilidade extends StatelessWidget {
+  const _AppComAcessibilidade();
 
   @override
   Widget build(BuildContext context) {
+    final a11y = context.watch<AcessibilidadeViewModel>();
+
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: TextScaler.linear(a11y.escalaFonte),
+        boldText: a11y.altoContraste,
+      ),
+      child: const VisionGuideApp(),
+    );
+  }
+}
+
+class VisionGuideApp extends StatefulWidget {
+  const VisionGuideApp({super.key});
+
+  @override
+  State<VisionGuideApp> createState() => _VisionGuideAppState();
+}
+
+class _VisionGuideAppState extends State<VisionGuideApp> {
+  GoRouter? _router;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _router ??= criarRotasApp(context.read<AutenticacaoViewModel>());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final router = _router;
+    if (router == null) {
+      return const MaterialApp(
+        home: Scaffold(
+          backgroundColor: Color(0xFF08111F),
+          body: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    final a11y = context.watch<AcessibilidadeViewModel>();
     final colorScheme = ColorScheme.fromSeed(
       seedColor: const Color(0xFF63A7FF),
       brightness: Brightness.dark,
+      contrastLevel: a11y.altoContraste ? 1.0 : 0.0,
     );
 
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'VisionGuide Mobile',
-      routerConfig: rotasApp(),
+      routerConfig: router,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: colorScheme,

@@ -1,35 +1,29 @@
 import 'package:flutter/material.dart';
 
 import '../models/acao_rapida.dart';
-import '../models/item_galeria.dart';
+import '../models/destino_acao_rapida.dart';
 
 class ConteudoInicio {
   ConteudoInicio._();
 
-  static const itensGaleria = <ItemGaleria>[
-    ItemGaleria(titulo: 'Praia', tipo: 'Foto', cor: Color(0xFF63A7FF)),
-    ItemGaleria(titulo: 'Floresta', tipo: 'Foto', cor: Color(0xFF7AD089)),
-    ItemGaleria(titulo: 'Mar', tipo: 'Vídeo', cor: Color(0xFF42CBE2)),
-    ItemGaleria(titulo: 'Cidade', tipo: 'Foto', cor: Color(0xFF9FA9C7)),
-    ItemGaleria(titulo: 'Noite', tipo: 'Foto', cor: Color(0xFF6D7EFF)),
-    ItemGaleria(titulo: 'Rua', tipo: 'Vídeo', cor: Color(0xFFF0A35C)),
-  ];
-
   static const atalhosRapidos = <AcaoRapida>[
     AcaoRapida(
-      titulo: 'Descrever ambiente',
-      subtitulo: 'Leitura rápida do cenário',
+      titulo: 'Descrever o ambiente',
+      subtitulo: 'Captura e fala o que está na sua frente',
       icone: Icons.visibility_outlined,
+      destino: DestinoAcaoRapida.camera,
     ),
     AcaoRapida(
-      titulo: 'Ler texto',
-      subtitulo: 'Reconhecer placas e avisos',
+      titulo: 'Ler texto ou placa',
+      subtitulo: 'Aponte a câmera para avisos e letreiros',
       icone: Icons.document_scanner_outlined,
+      destino: DestinoAcaoRapida.camera,
     ),
     AcaoRapida(
-      titulo: 'Alertar obstáculos',
-      subtitulo: 'Aviso de navegação em tempo real',
-      icone: Icons.warning_amber_rounded,
+      titulo: 'Perguntar ao assistente',
+      subtitulo: 'Tire dúvidas por voz ou texto',
+      icone: Icons.record_voice_over_outlined,
+      destino: DestinoAcaoRapida.assistente,
     ),
   ];
 }

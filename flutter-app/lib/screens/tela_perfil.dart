@@ -4,12 +4,16 @@ import '../widgets/perfil/modal_sobre.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/autenticacao_view_model.dart';
+import '../widgets/perfil/painel_acessibilidade.dart';
 
 class TelaPerfil extends StatelessWidget {
   const TelaPerfil({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AutenticacaoViewModel>();
+    final usuario = auth.usuarioAtual;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -46,9 +50,9 @@ class TelaPerfil extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'Vladimir Nepomuceno',
-                    style: TextStyle(
+                  Text(
+                    usuario?.nome ?? 'Usuário VisionGuide',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -56,7 +60,7 @@ class TelaPerfil extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'vladimir@email.com',
+                    usuario?.email ?? '—',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.6),
                       fontSize: 14,
@@ -81,19 +85,13 @@ class TelaPerfil extends StatelessWidget {
                 child: const Text('Editar informação'),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
+            const PainelAcessibilidade(),
+            const SizedBox(height: 24),
             CartaoOpcao(
               titulo: 'Conta e Segurança',
               icone: Icons.security_outlined,
               aoTocar: () {},
-            ),
-            const SizedBox(height: 12),
-            CartaoOpcao(
-              titulo: 'Definições de permissões backend',
-              icone: Icons.settings_outlined,
-              aoTocar: () {
-                context.push('/permissoes-backend');
-              },
             ),
             const SizedBox(height: 12),
             CartaoOpcao(

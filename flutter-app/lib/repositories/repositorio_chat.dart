@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 typedef OuvinteEventoChat = void Function(Map<String, dynamic> evento);
@@ -55,7 +56,13 @@ class RepositorioChat {
   }
 
   void fechar() {
-    _canal?.sink.close();
+    final canal = _canal;
     _canal = null;
+    if (canal == null) return;
+    try {
+      canal.sink.close(status.goingAway);
+    } catch (_) {
+      // conexão já encerrada pelo navegador
+    }
   }
 }

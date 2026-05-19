@@ -5,12 +5,42 @@ import '../screens/tela_entrar.dart';
 import '../screens/tela_registrar.dart';
 import '../screens/vision_guide_home.dart';
 import '../screens/tela_perfil.dart';
-import '../screens/tela_permissoes_backend.dart';
+import '../viewmodels/autenticacao_view_model.dart';
 
-GoRouter rotasApp() {
+const _rotasPublicas = ['/carregamento', '/entrar', '/registrar'];
+
+GoRouter criarRotasApp(AutenticacaoViewModel autenticacao) {
   return GoRouter(
     initialLocation: '/carregamento',
     debugLogDiagnostics: true,
+    refreshListenable: autenticacao,
+    redirect: (context, state) {
+      final auth = autenticacao;
+      final path = state.uri.path;
+
+      if (path.isEmpty || path == '/') {
+        return '/carregamento';
+      }
+
+      if (!auth.sessaoVerificada) {
+        return null;
+      }
+
+      if (path == '/carregamento') {
+        return auth.estaAutenticado ? '/inicio' : '/entrar';
+      }
+
+      if (auth.estaAutenticado &&
+          (path == '/entrar' || path == '/registrar')) {
+        return '/inicio';
+      }
+
+      if (!auth.estaAutenticado && !_rotasPublicas.contains(path)) {
+        return '/entrar';
+      }
+
+      return null;
+    },
     errorBuilder: (context, state) => Scaffold(
       backgroundColor: const Color(0xFF08111F),
       body: Center(
@@ -24,13 +54,6 @@ GoRouter rotasApp() {
         ),
       ),
     ),
-    redirect: (context, state) {
-      final path = state.uri.path;
-      if (path.isEmpty || path == '/') {
-        return '/carregamento';
-      }
-      return null;
-    },
     routes: [
       GoRoute(
         path: '/carregamento',
@@ -52,10 +75,13 @@ GoRouter rotasApp() {
         path: '/perfil',
         builder: (context, state) => const TelaPerfil(),
       ),
-      GoRoute(
-        path: '/permissoes-backend',
-        builder: (context, state) => const TelaPermissoesBackend(),
-      ),
     ],
+  );
+}
+
+/// Mantido para compatibilidade; prefira [criarRotasApp] com instância única.
+GoRouter rotasApp() {
+  throw UnsupportedError(
+    'Use criarRotasApp(autenticacao) uma única vez no VisionGuideApp.',
   );
 }
